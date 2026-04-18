@@ -97,6 +97,10 @@ jobs:
         run: |
           aws s3 rm s3://zen-pharma-terraform-state-ravdy/envs/dev/terraform.tfstate.tflock || true
 
+      - name: Show Terraform Plan
+        if: steps.plan.outcome == 'success'
+        run: terraform show -no-color tfplan
+
       - name: Upload plan file
         if: steps.plan.outcome == 'success'
         uses: actions/upload-artifact@v4
