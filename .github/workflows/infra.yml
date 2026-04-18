@@ -80,12 +80,12 @@ jobs:
       - name: Terraform Plan
         id: plan
         run: |
-          terraform plan \
-            -var="db_password=${{ secrets.DEV_DB_PASSWORD }}" \
-            -var="jwt_secret=${{ secrets.DEV_JWT_SECRET }}" \
-            -var="github_org=ravdy" \
-            -out=tfplan \
-            -no-color
+          terraform plan -no-color   #\
+            #-var="db_password=${{ secrets.DEV_DB_PASSWORD }}" \
+            #-var="jwt_secret=${{ secrets.DEV_JWT_SECRET }}" \
+            #-var="github_org=ravdy" \
+            #-out=tfplan \
+            #-no-color
         continue-on-error: true
 
       - name: Check plan status
@@ -187,12 +187,12 @@ jobs:
 
       - name: Terraform Destroy
         run: |
-          terraform destroy \
-            -var="db_password=${{ secrets.DEV_DB_PASSWORD }}" \
-            -var="jwt_secret=${{ secrets.DEV_JWT_SECRET }}" \
-            -var="github_org=ravdy" \
-            -auto-approve \
-            -no-color
+          terraform destroy -no-color #\
+            #-var="db_password=${{ secrets.DEV_DB_PASSWORD }}" \
+            #-var="jwt_secret=${{ secrets.DEV_JWT_SECRET }}" \
+            #-var="github_org=ravdy" \
+            #-auto-approve \
+            #-no-color
 
       - name: Release state lock on failure
         if: failure() || cancelled()
