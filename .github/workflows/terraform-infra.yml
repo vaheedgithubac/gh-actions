@@ -1,8 +1,10 @@
-name: Terraform Infrastructure
+####################################################
+#      PR → main   | ✅ plan only
+#      Push → main | ✅ plan → ⏸ approval → apply
+#      Manual      | ✅ plan / apply / destroy
+####################################################
 
-# PR → main   | ✅ plan only
-# Push → main | ✅ plan → ⏸ approval → apply
-# Manual      | ✅ plan / apply / destroy
+name: Terraform Infrastructure
 
 on:
   push:
@@ -31,7 +33,6 @@ on:
         required: false
         default: ''
 
-# ✅ GLOBAL CONFIG
 env:
   TF_VERSION: '1.10.0'
   AWS_REGION: us-east-1
@@ -39,30 +40,50 @@ env:
   ENVIRONMENT: dev
   WORKING_DIR: envs/dev
 
-  IS_DESTROY: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'destroy' && github.event.inputs.confirm_destroy == 'destroy' }}
-
-  IS_APPLY: ${{ 
-    (github.ref == 'refs/heads/main' && github.event_name == 'push') || 
-    (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply') 
-  }}
-
 permissions:
-  id-token: write   # 🔥 REQUIRED for OIDC
+  id-token: write
   contents: read
 
-# ✅ ONLY HERE (as per your rule)
 concurrency:
   group: terraform-${{ github.ref }}-${{ env.ENVIRONMENT }}
   cancel-in-progress: false
 
 jobs:
+
+# ✅ JOB 1: Decide action (single source of truth)
+  decide-action:
+    runs-on: ubuntu-latest
+
+    outputs:
+      action: ${{ steps.set-action.outputs.action }}
+
+    steps:
+      - name: Decide Action
+        id: set-action
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && \
+                "${{ github.event.inputs.action }}" == "destroy" && \
+                "${{ github.event.inputs.confirm_destroy }}" == "destroy" ]]; then
+            echo "action=destroy" >> $GITHUB_OUTPUT
+
+          elif [[ ("${{ github.ref }}" == "refs/heads/main" && "${{ github.event_name }}" == "push") || \
+                  ("${{ github.event_name }}" == "workflow_dispatch" && "${{ github.event.inputs.action }}" == "apply") ]]; then
+            echo "action=apply" >> $GITHUB_OUTPUT
+
+          else
+            echo "action=plan" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Debug action
+        run: echo "Action = ${{ steps.set-action.outputs.action }}"
+
+# ✅ JOB 2: Terraform execution
   terraform:
+    needs: decide-action
     uses: ./.github/workflows/terraform-reusable.yml
 
     with:
-      # ✅ 🔥 ALL DECISIONS MADE HERE (NO "auto")
-      action: ${{ env.IS_DESTROY == 'true' && 'destroy' || env.IS_APPLY == 'true' && 'apply' || 'plan' }}
-
+      action: ${{ needs.decide-action.outputs.action }}
       confirm_destroy: ${{ github.event.inputs.confirm_destroy }}
 
       working_directory: ${{ env.WORKING_DIR }}
@@ -70,9 +91,6 @@ jobs:
 
       tf_version: ${{ env.TF_VERSION }}
       aws_region: ${{ env.AWS_REGION }}
+      state_bucket: ${{ env.STATE_BUCKET }}
 
-  
     secrets: inherit
-      
-- name: Debug action
-  run: echo "Action = ${{ inputs.action }}"
