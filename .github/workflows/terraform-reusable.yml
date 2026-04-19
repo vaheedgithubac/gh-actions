@@ -1,0 +1,138 @@
+name: Terraform Reusable
+
+on:
+  workflow_call:
+    inputs:
+      action:
+        required: true
+        type: string
+      confirm_destroy:
+        required: false
+        type: string
+      working_directory:
+        required: true
+        type: string
+      environment:
+        required: true
+        type: string
+      tf_version:
+        required: true
+        type: string
+      aws_region:
+        required: true
+        type: string
+      state_bucket:
+        required: false
+        type: string
+      aws_account_id:
+        required: true
+        type: string
+      role_name:
+        required: true
+        type: string
+
+jobs:
+
+# ───────────── PLAN ─────────────
+  plan:
+    name: Terraform Plan
+    if: inputs.action != 'destroy'
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory }}
+
+    steps:
+      - name: Setup Terraform
+        uses: ./.github/actions/terraform-setup
+        with:
+          tf_version: ${{ inputs.tf_version }}
+          aws_region: ${{ inputs.aws_region }}
+          aws_account_id: ${{ inputs.aws_account_id  }}
+          role_name: ${{ inputs.role_name }}
+          environment: ${{ inputs.environment }}
+          working_directory: ${{ inputs.working_directory }}
+
+      - run: terraform init
+
+      - run: terraform fmt -recursive     #-check -recursive
+
+      - run: terraform validate -no-color
+
+      - run: terraform plan -lock-timeout=1800s -out=tfplan -no-color
+
+      - name: Show Terraform Plan
+        if: steps.plan.outcome == 'success'
+        run: terraform show -no-color tfplan
+
+      - name: Upload Terraform Plan
+        if: steps.plan.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan
+          path: ${{ inputs.working_directory }}/tfplan
+          retention-days: 1
+
+
+# ───────────── APPLY ─────────────
+  apply:
+    needs: plan
+    if: inputs.action == 'apply'
+    runs-on: ubuntu-latest
+
+    environment: ${{ inputs.environment }}
+
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory }}
+
+    steps:
+      - name: Setup Terraform
+        uses: ./.github/actions/terraform-setup
+        with:
+          tf_version: ${{ inputs.tf_version }}
+          aws_region: ${{ inputs.aws_region }}
+          aws_account_id: ${{ inputs.aws_account_id  }}
+          role_name: ${{ inputs.role_name }}
+          environment: ${{ inputs.environment }}
+          working_directory: ${{ inputs.working_directory }}
+
+      - name: Download tfplan
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan
+          path: ${{ inputs.working_directory }}
+
+      - run: terraform init
+
+      - name: Terraform Apply
+        run: terraform apply -lock-timeout=1800s -auto-approve tfplan
+
+
+# ───────────── DESTROY ─────────────
+  destroy:
+    if: inputs.action == 'destroy' && inputs.confirm_destroy == 'destroy'
+    runs-on: ubuntu-latest
+
+    environment: ${{ inputs.environment }}
+
+    defaults:
+      run:
+        working-directory: ${{ inputs.working_directory }}
+
+    steps:
+      - name: Setup Terraform
+        uses: ./.github/actions/terraform-setup
+        with:
+          tf_version: ${{ inputs.tf_version }}
+          aws_region: ${{ inputs.aws_region }}
+          aws_account_id: ${{ inputs.aws_account_id  }}
+          role_name: ${{ inputs.role_name }}
+          environment: ${{ inputs.environment }}
+          working_directory: ${{ inputs.working_directory }}
+
+      - run: terraform init
+
+      - name: Terraform Apply
+        run: terraform destroy -lock-timeout=1800s -auto-approve
