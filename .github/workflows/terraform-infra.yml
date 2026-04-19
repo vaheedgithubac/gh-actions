@@ -1,0 +1,76 @@
+name: Terraform Infrastructure
+
+# PR → main   | ✅ plan only
+# Push → main | ✅ plan → ⏸ approval → apply
+# Manual      | ✅ plan / apply / destroy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'envs/dev/**'
+      - 'modules/**'
+
+  pull_request:
+    branches: [main]
+    paths:
+      - 'envs/dev/**'
+      - 'modules/**'
+
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Terraform action'
+        required: true
+        default: 'plan'
+        type: choice
+        options: [plan, apply, destroy]
+
+      confirm_destroy:
+        description: 'Type "destroy" to confirm destruction'
+        required: false
+        default: ''
+
+# ✅ GLOBAL CONFIG
+env:
+  TF_VERSION: '1.10.0'
+  AWS_REGION: us-east-1
+  STATE_BUCKET: zen-pharma-terraform-state-ravdy
+  ENVIRONMENT: dev
+  WORKING_DIR: envs/dev
+
+  IS_DESTROY: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'destroy' && github.event.inputs.confirm_destroy == 'destroy' }}
+
+  IS_APPLY: ${{ 
+    (github.ref == 'refs/heads/main' && github.event_name == 'push') || 
+    (github.event_name == 'workflow_dispatch' && github.event.inputs.action == 'apply') 
+  }}
+
+permissions:
+  id-token: write   # 🔥 REQUIRED for OIDC
+  contents: read
+
+# ✅ ONLY HERE (as per your rule)
+concurrency:
+  group: terraform-${{ github.ref }}-${{ env.ENVIRONMENT }}
+  cancel-in-progress: false
+
+jobs:
+  terraform:
+    uses: ./.github/workflows/terraform-reusable.yml
+
+    with:
+      # ✅ 🔥 ALL DECISIONS MADE HERE (NO "auto")
+      action: ${{ env.IS_DESTROY == 'true' && 'destroy' || env.IS_APPLY == 'true' && 'apply' || 'plan' }}
+
+      confirm_destroy: ${{ github.event.inputs.confirm_destroy }}
+
+      working_directory: ${{ env.WORKING_DIR }}
+      environment: ${{ env.ENVIRONMENT }}
+
+      tf_version: ${{ env.TF_VERSION }}
+      aws_region: ${{ env.AWS_REGION }}
+
+      
+- name: Debug action
+  run: echo "Action = ${{ inputs.action }}"
