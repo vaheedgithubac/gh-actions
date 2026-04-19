@@ -71,6 +71,8 @@ jobs:
       tf_version: ${{ env.TF_VERSION }}
       aws_region: ${{ env.AWS_REGION }}
 
+  
+    secrets: inherit
       
 - name: Debug action
   run: echo "Action = ${{ inputs.action }}"
