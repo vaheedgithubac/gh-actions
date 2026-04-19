@@ -1,0 +1,53 @@
+name: "Terraform Setup"
+description: "Setup Terraform, cache, and AWS credentials"
+
+inputs:
+  tf_version:
+    required: true
+  aws_region:
+    required: true
+  working_directory:
+    required: true
+  environment:
+    required: true
+  aws_account_id:
+    required: true
+  role_name:
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ inputs.tf_version }}
+
+    # ✅ Plugin cache config
+    - name: Setup Plugin Cache
+      shell: bash
+      run: |
+        mkdir -p ~/.terraform.d
+        echo 'plugin_cache_dir = "~/.terraform.d/plugin-cache"' > ~/.terraformrc
+
+    # ✅ Cache restore
+    - name: Cache Terraform
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.terraform.d/plugin-cache
+          ${{ inputs.working_directory }}/.terraform
+        key: terraform-${{ runner.os }}-${{ inputs.environment }}-${{ hashFiles(format('{0}/.terraform.lock.hcl', inputs.working_directory)) }}
+        restore-keys: |
+          terraform-${{ runner.os }}-${{ inputs.environment }}-
+          terraform-${{ runner.os }}-
+
+    # ✅ AWS Auth (OIDC)
+    - name: Configure AWS Credentials (OIDC)
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: arn:aws:iam::${{ inputs.aws_account_id }}:role/${{ inputs.role_name }}
+        aws-region: ${{ inputs.aws_region }}
