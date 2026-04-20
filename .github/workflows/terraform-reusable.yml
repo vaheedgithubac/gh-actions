@@ -21,15 +21,16 @@ on:
       aws_region:
         required: true
         type: string
-      state_bucket:
-        required: false
-        type: string
       aws_account_id:
         required: true
         type: string
       role_name:
         required: true
         type: string
+
+      # state_bucket:
+      #  required: false
+      # type: string
 
 jobs:
 
