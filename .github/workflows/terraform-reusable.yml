@@ -45,6 +45,9 @@ jobs:
         working-directory: ${{ inputs.working_directory }}
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+    
       - name: Setup Terraform
         uses: ./.github/actions/terraform-setup
         with:
@@ -91,6 +94,9 @@ jobs:
         working-directory: ${{ inputs.working_directory }}
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
       - name: Setup Terraform
         uses: ./.github/actions/terraform-setup
         with:
@@ -128,6 +134,9 @@ jobs:
         working-directory: ${{ inputs.working_directory }}
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
       - name: Setup Terraform
         uses: ./.github/actions/terraform-setup
         with:
