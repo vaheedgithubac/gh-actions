@@ -60,6 +60,15 @@ jobs:
       action: ${{ steps.set-action.outputs.action }}
 
     steps:
+      - name: Validate destroy confirmation
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          if [[ "${{ github.event.inputs.action }}" == "destroy" && \
+                "${{ github.event.inputs.confirm_destroy }}" != "destroy" ]]; then
+           echo "❌ ERROR: You must type 'destroy' to confirm destruction."
+           exit 1
+          fi
+         
       - name: Decide Action
         id: set-action
         run: |
