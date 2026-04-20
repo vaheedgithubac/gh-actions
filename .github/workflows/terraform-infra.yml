@@ -1,8 +1,8 @@
-####################################################
-#      PR → main   | ✅ plan only
-#      Push → main | ✅ plan → ⏸ approval → apply
-#      Manual      | ✅ plan / apply / destroy
-####################################################
+#########################################################
+#      PR → main   | ✅ plan only                       #
+#      Push → main | ✅ plan → ⏸ approval → apply      #
+#      Manual      | ✅ plan / apply / destroy          #
+#########################################################
 
 name: Terraform Infrastructure
 
