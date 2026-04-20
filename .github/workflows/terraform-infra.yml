@@ -36,9 +36,9 @@ on:
 env:
   TF_VERSION: '1.10.0'
   AWS_REGION: us-east-1
-  STATE_BUCKET: zen-pharma-terraform-state-ravdy
   ENVIRONMENT: dev
   WORKING_DIR: envs/dev
+  # STATE_BUCKET: zen-pharma-terraform-state-ravdy
 
 permissions:
   id-token: write
@@ -91,6 +91,8 @@ jobs:
 
       tf_version: ${{ env.TF_VERSION }}
       aws_region: ${{ env.AWS_REGION }}
-      state_bucket: ${{ env.STATE_BUCKET }}
+      aws_account_id: ${{ env.AWS_ACCOUNT_ID }}
+      role_name: ${{ env.role_name }}
+      # state_bucket: ${{ env.STATE_BUCKET }}
 
     secrets: inherit
