@@ -46,7 +46,6 @@ jobs:
 
     steps:
       - name: Setup Terraform
-        id: plan
         uses: ./.github/actions/terraform-setup
         with:
           tf_version: ${{ inputs.tf_version }}
@@ -62,7 +61,9 @@ jobs:
 
       - run: terraform validate -no-color
 
-      - run: terraform plan -lock-timeout=1800s -out=tfplan -no-color
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -lock-timeout=1800s -out=tfplan -no-color
 
       - name: Show Terraform Plan
         if: steps.plan.outcome == 'success'
@@ -100,11 +101,14 @@ jobs:
           environment: ${{ inputs.environment }}
           working_directory: ${{ inputs.working_directory }}
 
+      - name: Verify tfplan exists
+        run: ls -l tfplan
+
       - name: Download tfplan
         uses: actions/download-artifact@v4
         with:
           name: tfplan
-          path: ./
+          path: ${{ inputs.working_directory }}
 
       - run: terraform init -upgrade
 
@@ -136,5 +140,5 @@ jobs:
 
       - run: terraform init -upgrade
 
-      - name: Terraform Apply
+      - name: Terraform Destroy
         run: terraform destroy -lock-timeout=1800s -auto-approve
