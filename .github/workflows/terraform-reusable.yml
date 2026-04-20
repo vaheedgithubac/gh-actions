@@ -79,7 +79,7 @@ jobs:
 # ───────────── APPLY ─────────────
   apply:
     needs: plan
-    if: inputs.action == 'apply'
+    if: inputs.action == 'apply' && needs.plan.result == 'success'
     runs-on: ubuntu-latest
 
     environment: ${{ inputs.environment }}
