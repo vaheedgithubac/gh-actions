@@ -47,7 +47,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: terraform-${{ github.ref }}-${{ env.ENVIRONMENT }}
+  group: terraform-${{ github.ref }}   # prevent parallel runs on the same branch
   cancel-in-progress: false
 
 jobs:
