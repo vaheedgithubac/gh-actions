@@ -147,7 +147,16 @@ jobs:
           environment: ${{ inputs.environment }}
           working_directory: ${{ inputs.working_directory }}
 
-      - run: terraform init -upgrade
+      - run: terraform init
+
+      - name: Terraform State List
+        run: terraform state list || true
+
+      - name: Confirm destroy execution
+        run: |
+          echo "⚠️ DESTROY triggered"
+          echo "Environment: ${{ inputs.environment }}"
+          echo "Directory: ${{ inputs.working_directory }}"
 
       - name: Terraform Destroy
         run: terraform destroy -lock-timeout=1800s -auto-approve
