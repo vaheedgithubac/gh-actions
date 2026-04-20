@@ -38,6 +38,8 @@ env:
   AWS_REGION: us-east-1
   ENVIRONMENT: dev
   WORKING_DIR: envs/dev
+  AWS_ACCOUNT_ID: "<AWS_ACCOUNT_ID>"
+  ROLE_NAME: "<ROLE_NAME>"
   # STATE_BUCKET: zen-pharma-terraform-state-ravdy
 
 permissions:
@@ -92,7 +94,7 @@ jobs:
       tf_version: ${{ env.TF_VERSION }}
       aws_region: ${{ env.AWS_REGION }}
       aws_account_id: ${{ env.AWS_ACCOUNT_ID }}
-      role_name: ${{ env.role_name }}
+      role_name: ${{ env.ROLE_NAME }}
       # state_bucket: ${{ env.STATE_BUCKET }}
 
     secrets: inherit
