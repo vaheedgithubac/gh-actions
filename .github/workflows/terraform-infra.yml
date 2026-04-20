@@ -33,7 +33,7 @@ on:
         required: false
         default: ''
 
-env:
+vars:
   TF_VERSION: '1.10.0'
   AWS_REGION: us-east-1
   ENVIRONMENT: dev
@@ -97,13 +97,13 @@ jobs:
       action: ${{ needs.decide-action.outputs.action }}
       confirm_destroy: ${{ github.event.inputs.confirm_destroy }}
 
-      working_directory: ${{ env.WORKING_DIR }}
-      environment: ${{ env.ENVIRONMENT }}
+      working_directory: ${{ vars.WORKING_DIR }}
+      environment: ${{ vars.ENVIRONMENT }}
 
-      tf_version: ${{ env.TF_VERSION }}
-      aws_region: ${{ env.AWS_REGION }}
-      aws_account_id: ${{ env.AWS_ACCOUNT_ID }}
-      role_name: ${{ env.ROLE_NAME }}
+      tf_version: ${{ vars.TF_VERSION }}
+      aws_region: ${{ vars.AWS_REGION }}
+      aws_account_id: ${{ vars.AWS_ACCOUNT_ID }}
+      role_name: ${{ vars.ROLE_NAME }}
       # state_bucket: ${{ env.STATE_BUCKET }}
 
     secrets: inherit
