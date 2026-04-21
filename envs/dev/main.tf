@@ -1,5 +1,6 @@
 # Create VPC
 # Feature-1
+# Feature-2
 resource "aws_vpc" "vpc" {
   cidr_block           = var.vpc_cidr
   instance_tenancy     = "default"
