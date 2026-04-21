@@ -21,6 +21,15 @@ on:
 
   workflow_dispatch:
     inputs:
+	  environment:
+        description: "Select environment"
+        required: true
+        type: choice
+        options:
+          - dev
+          - stage
+          - prod
+		  
       action:
         description: 'Terraform action'
         required: true
@@ -90,20 +99,22 @@ jobs:
 
 # ✅ JOB 2: Terraform execution
   terraform:
+    name: Call Terraform reusable workflow
     needs: decide-action
+	environment: ${{ inputs.environment }}
     uses: ./.github/workflows/terraform-reusable.yml
 
     with:
       action: ${{ needs.decide-action.outputs.action }}
       confirm_destroy: ${{ github.event.inputs.confirm_destroy }}
 
-      working_directory: envs/dev    # ${{ env.WORKING_DIR }}
-      environment: dev               # ${{ env.ENVIRONMENT }}
+      working_directory: ${{ vars.WORKING_DIR }}    # envs/dev 
+      environment: ${{ vars.ENVIRONMENT }}          # dev 
 
-      tf_version: '1.10.0'           # ${{ env.TF_VERSION }}
-      aws_region: us-east-1          # ${{ env.AWS_REGION }}
-      aws_account_id: '254405569649' # ${{ env.AWS_ACCOUNT_ID }}
-      role_name: manual-github-role  # ${{ env.ROLE_NAME }}
+      tf_version: ${{ vars.TF_VERSION }}            # '1.10.0' 
+      aws_region: ${{ vars.AWS_REGION }}            # us-east-1 
+      aws_account_id: ${{ vars.AWS_ACCOUNT_ID }}    # '254405569649' 
+      role_name: {{ vars.ROLE_NAME }}               # manual-github-role$
       # state_bucket: ${{ env.STATE_BUCKET }}
 
     secrets: inherit
