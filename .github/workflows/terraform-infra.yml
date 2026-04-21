@@ -21,43 +21,38 @@ on:
 
   workflow_dispatch:
     inputs:
-      environment:
-        description: "Select environment"
-        required: true
-		default: "dev"
-        type: choice
-        options:
-          - dev
-          - stage
-          - prod
-
       action:
-        description: "Terraform action"
+        description: 'Terraform action'
         required: true
-        default: "plan"
+        default: 'plan'
         type: choice
-        options:
-          - plan
-          - apply
-          - destroy
+        options: [plan, apply, destroy]
 
       confirm_destroy:
         description: 'Type "destroy" to confirm destruction'
         required: false
-        default: ""
+        default: ''
+
+# env:
+#   TF_VERSION: '1.10.0'
+#   AWS_REGION: us-east-1
+#   ENVIRONMENT: dev
+#   WORKING_DIR: envs/dev
+#   AWS_ACCOUNT_ID: '254405569649'
+#   ROLE_NAME: manual-github-role
+  # STATE_BUCKET: zen-pharma-terraform-state-ravdy
 
 permissions:
   id-token: write
   contents: read
 
 concurrency:
-  group: terraform-${{ github.ref }}
+  group: terraform-${{ github.ref }}   # prevent parallel runs on the same branch
   cancel-in-progress: false
 
 jobs:
-  #########################################################
-  # ✅ JOB 1: Decide action (single source of truth)
-  #########################################################
+
+# ✅ JOB 1: Decide action (single source of truth)
   decide-action:
     runs-on: ubuntu-latest
 
@@ -70,10 +65,10 @@ jobs:
         run: |
           if [[ "${{ github.event.inputs.action }}" == "destroy" && \
                 "${{ github.event.inputs.confirm_destroy }}" != "destroy" ]]; then
-            echo "❌ ERROR: You must type 'destroy' to confirm destruction."
-            exit 1
+           echo "❌ ERROR: You must type 'destroy' to confirm destruction."
+           exit 1
           fi
-
+         
       - name: Decide Action
         id: set-action
         run: |
@@ -93,29 +88,22 @@ jobs:
       - name: Debug action
         run: echo "Action = ${{ steps.set-action.outputs.action }}"
 
-  #########################################################
-  # ✅ JOB 2: Terraform execution
-  #########################################################
+# ✅ JOB 2: Terraform execution
   terraform:
-    name: Call Terraform reusable workflow
     needs: decide-action
-
-    # 🔥 Important: fallback for non-workflow_dispatch events
-    environment: ${{ github.event.inputs.environment || 'dev' }}
-
     uses: ./.github/workflows/terraform-reusable.yml
 
     with:
       action: ${{ needs.decide-action.outputs.action }}
       confirm_destroy: ${{ github.event.inputs.confirm_destroy }}
 
-      working_directory: ${{ vars.WORKING_DIR }}
-      environment: ${{ vars.ENVIRONMENT }}
+      working_directory: envs/dev    # ${{ env.WORKING_DIR }}
+      environment: dev               # ${{ env.ENVIRONMENT }}
 
-      tf_version: ${{ vars.TF_VERSION }}
-      aws_region: ${{ vars.AWS_REGION }}
-      aws_account_id: ${{ vars.AWS_ACCOUNT_ID }}
-      role_name: ${{ vars.ROLE_NAME }}
-      # state_bucket: ${{ vars.STATE_BUCKET }}
+      tf_version: '1.10.0'           # ${{ env.TF_VERSION }}
+      aws_region: us-east-1          # ${{ env.AWS_REGION }}
+      aws_account_id: '254405569649' # ${{ env.AWS_ACCOUNT_ID }}
+      role_name: manual-github-role  # ${{ env.ROLE_NAME }}
+      # state_bucket: ${{ env.STATE_BUCKET }}
 
     secrets: inherit
