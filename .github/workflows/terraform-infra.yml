@@ -54,6 +54,7 @@ jobs:
 
 # ✅ JOB 1: Decide action (single source of truth)
   decide-action:
+    name: terrafform-action-decide
     runs-on: ubuntu-latest
 
     outputs:
@@ -90,6 +91,7 @@ jobs:
 
 # ✅ JOB 2: Terraform execution
   terraform:
+    name: terraform-pipeline
     needs: decide-action
     uses: ./.github/workflows/terraform-reusable.yml
 
